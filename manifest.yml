@@ -1,0 +1,58 @@
+modules:
+  jira:adminPage:
+    - key: figma-admin-page
+      resource: admin-ui
+      resolver:
+        function: admin-resolver
+      render: native
+      title: Figma for Jira (Forge port)
+      useAsConfig: true
+
+  trigger:
+    - key: app-installed
+      function: on-installed
+      events:
+        - avi:forge:installed:app
+
+  preUninstall:
+    - key: app-pre-uninstall
+      function: on-pre-uninstall
+
+  webtrigger:
+    - key: figma-webhook
+      function: figma-webhook
+      urlFormat: v2
+      response:
+        type: dynamic
+
+  consumer:
+    - key: figma-sync-consumer
+      queue: figma-sync
+      function: figma-sync
+
+  function:
+    - key: admin-resolver
+      handler: index.adminResolver
+    - key: on-installed
+      handler: index.onInstalled
+    - key: on-pre-uninstall
+      handler: index.onPreUninstall
+    - key: figma-webhook
+      handler: index.figmaWebhook
+    - key: figma-sync
+      handler: index.figmaSync
+      timeoutSeconds: 900
+
+resources:
+  - key: admin-ui
+    path: src/frontend/index.tsx
+
+permissions:
+  scopes:
+    - storage:app
+    - read:jira-work
+
+app:
+  runtime:
+    name: nodejs22.x
+  id: ari:cloud:ecosystem::app/REPLACE-ON-FORGE-REGISTER
