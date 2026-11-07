@@ -54,5 +54,5 @@ permissions:
 
 app:
   runtime:
-    name: nodejs22.x
+    name: nodejs24.x
   id: ari:cloud:ecosystem::app/e3249b50-51d7-4dee-9e69-0563f1f8aa38
