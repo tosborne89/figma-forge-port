@@ -24,6 +24,11 @@ modules:
       urlFormat: v2
       response:
         type: dynamic
+    - key: figma-oauth-callback
+      function: figma-oauth-callback-fn
+      urlFormat: v2
+      response:
+        type: dynamic
 
   consumer:
     - key: figma-sync-consumer
@@ -39,6 +44,8 @@ modules:
       handler: index.onPreUninstall
     - key: figma-webhook-fn
       handler: index.figmaWebhook
+    - key: figma-oauth-callback-fn
+      handler: index.figmaOAuthCallback
     - key: figma-sync
       handler: index.figmaSync
       timeoutSeconds: 900
@@ -51,6 +58,10 @@ permissions:
   scopes:
     - storage:app
     - read:jira-work
+  external:
+    fetch:
+      backend:
+        - address: api.figma.com
 
 app:
   runtime:

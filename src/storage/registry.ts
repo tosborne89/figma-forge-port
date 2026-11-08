@@ -1,5 +1,7 @@
 import { kvs, WhereConditions } from '@forge/kvs';
 
+import { CREDENTIALS_INDEX_PREFIX, CREDENTIALS_PREFIX } from '../figma/figma-auth';
+
 // Replaces the FigmaTeam and FigmaFileWebhook Postgres tables. Forge partitions
 // storage per installation, so the connect_installation_id foreign key goes away.
 export type FigmaTeamRecord = {
@@ -121,6 +123,13 @@ export const kvsRegistry: WebhookRegistry & {
       await kvs.deleteSecret(FILE_HOOK_PREFIX + hook.webhookId);
 
       await kvs.delete(FILE_HOOK_INDEX_PREFIX + hook.webhookId);
+    }
+
+    // Figma tokens go last: preUninstall needs them to delete the webhooks first.
+    for (const { accountId } of await listByPrefix<{ accountId: string }>(CREDENTIALS_INDEX_PREFIX)) {
+      await kvs.deleteSecret(CREDENTIALS_PREFIX + accountId);
+
+      await kvs.delete(CREDENTIALS_INDEX_PREFIX + accountId);
     }
   },
 };
