@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import Resolver from '@forge/resolver';
 
+import { parseFigmaFileKey, type SyncJob } from '../domain/sync-job';
 import type { FigmaAuth } from '../figma/figma-auth';
 import { FigmaNotConnectedError } from '../figma/figma-auth';
 import type { FigmaClient } from '../figma/figma-client';
@@ -14,6 +15,7 @@ type Deps = {
   readonly registry: typeof kvsRegistry;
   readonly redirectUri: () => Promise<string>;
   readonly webhookEndpoint: () => Promise<string>;
+  readonly enqueue: (job: SyncJob) => Promise<unknown>;
 };
 
 export type FigmaAuthStatus = { connected: true; email: string } | { connected: false };
@@ -24,7 +26,7 @@ export type ConnectTeamResult =
 
 // Ports the admin auth route (/admin/auth/me) and connectFigmaTeamUseCase.
 // These run user-invoked from the admin page, so context.accountId is the admin.
-export function createAdminResolver({ auth, figma, registry, redirectUri, webhookEndpoint }: Deps) {
+export function createAdminResolver({ auth, figma, registry, redirectUri, webhookEndpoint, enqueue }: Deps) {
   const resolver = new Resolver();
 
   resolver.define('listTeams', async () => registry.listTeams());
@@ -83,6 +85,20 @@ export function createAdminResolver({ auth, figma, registry, redirectUri, webhoo
 
       throw e;
     }
+  });
+
+  // Dev-only: shows the no-user consumer path on a free Figma plan. The job runs later
+  // in the queue consumer, where there is no user context, with the caller's stored token.
+  resolver.define('queueTestSync', async ({ payload, context }) => {
+    const fileKey = parseFigmaFileKey(String((payload as { fileUrl?: unknown }).fileUrl ?? ''));
+
+    if (fileKey === undefined) {
+      return { ok: false };
+    }
+
+    await enqueue({ source: 'manual', ownerAccountId: context.accountId as string, fileKey });
+
+    return { ok: true, fileKey };
   });
 
   resolver.define('disconnectFigma', async ({ context }) => {

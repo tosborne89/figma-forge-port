@@ -2,6 +2,7 @@ import api, { webTrigger } from '@forge/api';
 import { Queue } from '@forge/events';
 import { kvs } from '@forge/kvs';
 
+import type { SyncJob } from './domain/sync-job';
 import { createFigmaAuth, type FigmaAuthConfig, type HttpFetch } from './figma/figma-auth';
 import { createFigmaClient } from './figma/figma-client';
 import { createAdminResolver } from './handlers/admin-resolver';
@@ -34,19 +35,22 @@ const redirectUri = () => webTrigger.getUrl('figma-oauth-callback');
 
 const syncQueue = new Queue({ key: 'figma-sync' });
 
+const enqueue = (job: SyncJob) => syncQueue.push({ body: job });
+
 export const adminResolver = createAdminResolver({
   auth,
   figma,
   registry: kvsRegistry,
   redirectUri,
   webhookEndpoint: () => webTrigger.getUrl('figma-webhook'),
+  enqueue,
 });
 
 export const figmaOAuthCallback = createOAuthCallbackHandler({ auth, redirectUri });
 
 export const figmaWebhook = createFigmaWebhookHandler({
   registry: kvsRegistry,
-  enqueue: (job) => syncQueue.push({ body: job }),
+  enqueue,
 });
 
 export const figmaSync = createFigmaSyncHandler({ registry: kvsRegistry, figma });

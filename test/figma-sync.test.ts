@@ -56,3 +56,13 @@ describe('figma-sync consumer', () => {
     await expect(handler(event({ source: 'team', webhookId: 'team-hook', fileKey: 'F9', eventType: 'FILE_UPDATE' }))).rejects.toThrow('503');
   });
 });
+
+describe('figma-sync consumer, dev-only manual job', () => {
+  it('reads the file as the account named in the job, with no webhook record', async () => {
+    const { handler, getFileSummary } = setup();
+
+    await handler(event({ source: 'manual', ownerAccountId: 'acc-admin', fileKey: 'F5' }));
+
+    expect(getFileSummary).toHaveBeenCalledWith('acc-admin', 'F5');
+  });
+});

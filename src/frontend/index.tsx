@@ -36,6 +36,8 @@ const App = () => {
 
   const [message, setMessage] = useState<string | null>(null);
 
+  const [fileUrl, setFileUrl] = useState('');
+
   const refresh = useCallback(() => {
     // No metadata was requested, so each response is the plain body.
     invoke<TeamSummary[]>('listTeams').then((res) => setTeams(res as TeamSummary[]));
@@ -66,6 +68,14 @@ const App = () => {
     setMessage(result.ok ? 'Team connected.' : CONNECT_ERRORS[result.reason] ?? 'Could not connect the team.');
 
     refresh();
+  };
+
+  const queueTestSync = async () => {
+    const result = (await invoke('queueTestSync', { fileUrl })) as { ok: boolean; fileKey?: string };
+
+    setMessage(result.ok
+      ? `Queued a background read of file ${result.fileKey}. It runs in the background with no user present.`
+      : 'Paste a Figma file link, for example https://www.figma.com/design/<key>/<name>.');
   };
 
   const rows = (teams ?? []).map((t) => ({
@@ -115,6 +125,16 @@ const App = () => {
         rows={rows}
         emptyView={<Text>No Figma teams connected.</Text>}
       />
+
+      <Heading as="h3">Test background sync (dev only)</Heading>
+
+      <Text>Free Figma plans cannot create webhooks, so this queues the same background job a webhook would.</Text>
+
+      <Inline space="space.100" alignBlock="end">
+        <Textfield name="fileUrl" placeholder="Figma file link" value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} />
+
+        <Button onClick={queueTestSync} isDisabled={figmaAuth?.connected !== true}>Queue test sync</Button>
+      </Inline>
     </Stack>
   );
 };
