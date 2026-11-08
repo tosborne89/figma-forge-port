@@ -57,12 +57,12 @@ export class FigmaNotConnectedError extends Error {
 
 export class FigmaOAuthError extends Error {}
 
-// projects:read in the Connect app is deprecated; folders:read replaces it.
+// Least privilege for what is ported. The Connect app also asked for projects:read
+// (deprecated, for team names) and file_dev_resources:*, used by the unported Designs panel.
 export const FIGMA_SCOPES = [
   'current_user:read',
   'file_content:read',
   'file_metadata:read',
-  'folders:read',
   'webhooks:read',
   'webhooks:write',
 ].join(' ');
